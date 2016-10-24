@@ -39,6 +39,11 @@ $ go get goji.io
 $ go get gopkg.in/mgo.v2
 ```
 
+* [cors](go get github.com/rs/cors) Go net/http configurable handler to handle CORS requests
+```sh
+$ go get github.com/rs/cors
+```
+
 ### Navigate to the project root folder
 ```sh
 $ cd [projectRoot]
