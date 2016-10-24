@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"./model"
 	"goji.io"
@@ -28,8 +29,48 @@ func main() {
 	//register all handler for each end point
 	mux.HandleFuncC(pat.Get("/swit/:switId"), getSwit(db))
 	mux.HandleFuncC(pat.Get("/swits"), getAllSwits(db))
+	mux.HandleFuncC(pat.Post("/swits"), createSwit(db))
 	//finally, listen and serve in designated host and port
 	http.ListenAndServe("localhost:3001", mux)
+}
+
+func createSwit(s *mgo.Session) goji.HandlerFunc {
+	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+		//create a copy of a session
+		session := s.Copy()
+		//clear the copied session once it's done
+		defer session.Close()
+		//get the body request
+		var swit model.Swit
+		decoder := json.NewDecoder(req.Body)
+		err := decoder.Decode(&swit)
+		if err != nil {
+			fmt.Println("Incorrect body of request")
+			return
+		}
+
+		//should be now
+		swit.Time = time.Now()
+		swit.SwitId = bson.NewObjectIdWithTime(swit.Time)
+		//TODO: should get the user id from req too
+		swit.UserId = bson.NewObjectId()
+		fmt.Println("incoming swit: ", swit)
+
+		c := session.DB("swit_app").C("swits")
+		//insert the new swit and catch error
+		err = c.Insert(swit)
+		if err != nil {
+			//failed to Insert
+			fmt.Println("Failed to insert a new book")
+			log.Fatal(err)
+		}
+		resBody := SimpleResponse{"Successfully added a new book", true}
+		fmt.Println("res body content: ", resBody)
+		//toJson
+		json, _ := json.Marshal(resBody)
+		//write a response back
+		ResponseWithJSON(w, json, http.StatusOK)
+	}
 }
 
 func getAllSwits(s *mgo.Session) goji.HandlerFunc {
@@ -65,7 +106,9 @@ func getSwit(s *mgo.Session) goji.HandlerFunc {
 		//get swits collection
 		c := session.DB("swit_app").C("swits")
 		var swit model.Swit
-		err := c.Find(bson.M{"switId": switID}).One(&swit)
+		//convert to object id
+		oid := bson.ObjectIdHex(switID)
+		err := c.Find(bson.M{"switId": oid}).One(&swit)
 		if err != nil {
 			panic(err)
 		}
@@ -82,4 +125,9 @@ func ResponseWithJSON(w http.ResponseWriter, json []byte, code int) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(code)
 	w.Write(json)
+}
+
+type SimpleResponse struct {
+	Message string `json:"message"`
+	Success bool   `json:"success"`
 }

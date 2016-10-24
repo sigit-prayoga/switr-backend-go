@@ -1,11 +1,17 @@
 package model
 
-import "time"
+import (
+	"time"
 
-type Swit struct {
-	Text   string    "json:text"
-	Time   time.Time "json:time"
-	SwitId string    `json:"switId" bson:"switId,omitempty"`
-	UserId string    `json:"userId" bson:"userId,omitempty"`
-	Likes  []string  "json:likes"
-}
+	"gopkg.in/mgo.v2/bson"
+)
+
+type (
+	Swit struct {
+		Text   string        "json:text"
+		Time   time.Time     "json:time"
+		SwitId bson.ObjectId `json:"switId" bson:"switId,omitempty"`
+		UserId bson.ObjectId `json:"userId" bson:"userId,omitempty"`
+		Likes  []string      "json:likes"
+	}
+)
