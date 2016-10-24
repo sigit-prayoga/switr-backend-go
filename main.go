@@ -29,10 +29,11 @@ func main() {
 	//initiate new multiplexer
 	mux := goji.NewMux()
 	//register all handler for each end point
-	mux.HandleFuncC(pat.Get("/swit/:switId"), getSwit(db))
+	mux.HandleFuncC(pat.Get("/swits/:switId"), getSwit(db))
 	mux.HandleFuncC(pat.Get("/swits"), getAllSwits(db))
 	mux.HandleFuncC(pat.Post("/swits"), createSwit(db))
 	mux.HandleFuncC(pat.Post("/users"), addUser(db))
+	mux.HandleFuncC(pat.Get("/users/:uid"), getUser(db))
 	//to allow cross origin
 	handler := cors.Default().Handler(mux)
 	//finally, listen and serve in designated host and port
@@ -87,6 +88,31 @@ func addUser(s *mgo.Session) goji.HandlerFunc {
 		}
 
 		ResponseSimpleMessage("Successfully added a new user", true, w)
+	}
+}
+
+func getUser(s *mgo.Session) goji.HandlerFunc {
+	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+		//create a copy of a session
+		session := s.Copy()
+		//clear the copied session once it's done
+		defer session.Close()
+		//get query param
+		uid := pat.Param(ctx, "uid")
+		//get collection of users
+		c := session.DB("swit_app").C("users")
+		//prepare the model
+		var user model.User
+		//fetch the user in db
+		err := c.Find(bson.M{"uid": uid}).One(&user)
+		if err != nil {
+			//failed to Insert
+			fmt.Printf("Unable to search user with uid: %s", uid)
+			log.Fatal(err)
+		}
+		//toJson
+		respBody, _ := json.Marshal(user)
+		ResponseWithJSON(w, respBody, http.StatusOK)
 	}
 }
 
