@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	"./model"
 	"goji.io"
@@ -27,7 +26,7 @@ func main() {
 
 func getAllSwits(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 	//prepare for the response
-	var swits []*Swit
+	var swits []*model.Swit
 	//catch them all and if there is an error
 	err := getSession().DB("swit_app").C("swits").Find(nil).All(&swits)
 	if err != nil {
@@ -75,7 +74,7 @@ func getSwit(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 	fmt.Printf("swit id is %s \n", switID)
 	//get the db session
 	swits := getSession().DB("swit_app").C("swits")
-	var swit Swit
+	var swit model.Swit
 	err := swits.Find(bson.M{"switId": switID}).One(&swit)
 	if err != nil {
 		panic(err)
@@ -91,12 +90,4 @@ func ResponseWithJSON(w http.ResponseWriter, json []byte, code int) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(code)
 	w.Write(json)
-}
-
-type Swit struct {
-	Text   string    "json:text"
-	Time   time.Time "json:time"
-	SwitId string    `json:"switId" bson:"switId,omitempty"`
-	UserId string    `json:"userId" bson:"userId,omitempty"`
-	Likes  []string  "json:likes"
 }
