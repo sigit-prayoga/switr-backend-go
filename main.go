@@ -37,7 +37,7 @@ func main() {
 	//to allow cross origin
 	handler := cors.Default().Handler(mux)
 	//finally, listen and serve in designated host and port
-	http.ListenAndServe("localhost:3001", handler)
+	http.ListenAndServe("127.0.0.1:3001", handler)
 }
 
 func ensureIndex(s *mgo.Session) {
