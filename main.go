@@ -84,7 +84,8 @@ func addUser(s *mgo.Session) goji.HandlerFunc {
 			}
 			//failed to Insert
 			fmt.Println("Failed to insert a new user")
-			log.Fatal(err)
+			ResponseSimpleMessage("Failed to insert a new user", false, w)
+			return
 		}
 
 		ResponseSimpleMessage("Successfully added a new user", true, w)
@@ -93,12 +94,17 @@ func addUser(s *mgo.Session) goji.HandlerFunc {
 
 func getUser(s *mgo.Session) goji.HandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+		//get query param
+		uid := pat.Param(ctx, "uid")
+		if len(uid) <= 0 {
+			fmt.Println("Empty uid")
+			ResponseSimpleMessage("No uid", false, w)
+			return
+		}
 		//create a copy of a session
 		session := s.Copy()
 		//clear the copied session once it's done
 		defer session.Close()
-		//get query param
-		uid := pat.Param(ctx, "uid")
 		//get collection of users
 		c := session.DB("swit_app").C("users")
 		//prepare the model
@@ -108,7 +114,7 @@ func getUser(s *mgo.Session) goji.HandlerFunc {
 		if err != nil {
 			//failed to Insert
 			fmt.Printf("Unable to search user with uid: %s", uid)
-			log.Fatal(err)
+			ResponseSimpleMessage("Unable to find the user", false, w)
 		}
 		//toJson
 		respBody, _ := json.Marshal(user)
@@ -143,10 +149,10 @@ func createSwit(s *mgo.Session) goji.HandlerFunc {
 		err = c.Insert(swit)
 		if err != nil {
 			//failed to Insert
-			fmt.Println("Failed to insert a new book")
-			log.Fatal(err)
+			fmt.Println("Failed to insert a new swit")
+			ResponseSimpleMessage("Failed to insert a new swit", false, w)
 		}
-		resBody := SimpleResponse{"Successfully added a new book", true}
+		resBody := SimpleResponse{"Successfully added a new swit", true}
 		fmt.Println("res body content: ", resBody)
 		//toJson
 		json, _ := json.Marshal(resBody)
